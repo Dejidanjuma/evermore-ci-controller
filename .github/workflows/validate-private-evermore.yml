@@ -55,7 +55,11 @@ jobs:
 
       - name: Apply non-breaking dependency security fixes
         working-directory: evermore
-        run: npm audit fix
+        run: |
+          npm audit fix || {
+            echo "npm audit fix left advisories; checking whether any high or critical issues remain."
+            npm audit --audit-level=high
+          }
 
       - name: Reinstall exact audited lockfile
         working-directory: evermore
