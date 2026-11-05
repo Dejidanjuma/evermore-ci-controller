@@ -12,9 +12,9 @@ concurrency:
 
 jobs:
   validate:
-    name: Install, Prisma, tests, typecheck and production build
+    name: Patch Next.js, install, Prisma, tests, typecheck and production build
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     env:
       DIRECT_URL: postgresql://ci:ci@127.0.0.1:5432/postgres?sslmode=disable
       DATABASE_URL: postgresql://ci:ci@127.0.0.1:6543/postgres?sslmode=disable
@@ -45,7 +45,11 @@ jobs:
           cache: npm
           cache-dependency-path: evermore/package-lock.json
 
-      - name: Install locked dependencies
+      - name: Regenerate lockfile with patched Next.js release
+        working-directory: evermore
+        run: npm install --package-lock-only --ignore-scripts --save-exact next@16.4.5 eslint-config-next@16.4.5
+
+      - name: Install regenerated dependency tree
         working-directory: evermore
         run: npm ci
 
@@ -61,6 +65,21 @@ jobs:
         working-directory: evermore
         run: npx tsc --noEmit
 
+      - name: Dependency vulnerability audit
+        working-directory: evermore
+        run: npm audit --audit-level=high
+
       - name: Production build
         working-directory: evermore
         run: npm run build
+
+      - name: Upload dependency manifests only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: evermore-nextjs-16.4.5-dependency-manifests
+          path: |
+            evermore/package.json
+            evermore/package-lock.json
+          if-no-files-found: error
+          retention-days: 3
