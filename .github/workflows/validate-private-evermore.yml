@@ -1,0 +1,66 @@
+name: Validate private Evermore
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: evermore-private-validation
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Install, Prisma, tests, typecheck and production build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      DIRECT_URL: postgresql://ci:ci@127.0.0.1:5432/postgres?sslmode=disable
+      DATABASE_URL: postgresql://ci:ci@127.0.0.1:6543/postgres?sslmode=disable
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-anon-placeholder
+      SUPABASE_SERVICE_ROLE_KEY: ci-service-placeholder
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+
+    steps:
+      - name: Checkout public CI controller
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Checkout private Evermore source
+        uses: actions/checkout@v4
+        with:
+          repository: Dejidanjuma/evermore
+          ref: feat/customer-resident-portal
+          token: ${{ secrets.EVERMORE_READ_TOKEN }}
+          path: evermore
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: evermore/package-lock.json
+
+      - name: Install locked dependencies
+        working-directory: evermore
+        run: npm ci
+
+      - name: Generate Prisma Client
+        working-directory: evermore
+        run: npx prisma generate
+
+      - name: Run automated tests
+        working-directory: evermore
+        run: npm test
+
+      - name: Typecheck
+        working-directory: evermore
+        run: npx tsc --noEmit
+
+      - name: Production build
+        working-directory: evermore
+        run: npm run build
