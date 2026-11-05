@@ -12,9 +12,9 @@ concurrency:
 
 jobs:
   validate:
-    name: Patch Next.js, install, Prisma, tests, typecheck and production build
+    name: Patch Next.js, remediate dependencies, tests and build
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 45
     env:
       DIRECT_URL: postgresql://ci:ci@127.0.0.1:5432/postgres?sslmode=disable
       DATABASE_URL: postgresql://ci:ci@127.0.0.1:6543/postgres?sslmode=disable
@@ -50,6 +50,14 @@ jobs:
         run: npm install --package-lock-only --ignore-scripts --save-exact next@16.4.5 eslint-config-next@16.4.5
 
       - name: Install regenerated dependency tree
+        working-directory: evermore
+        run: npm ci
+
+      - name: Apply non-breaking dependency security fixes
+        working-directory: evermore
+        run: npm audit fix
+
+      - name: Reinstall exact audited lockfile
         working-directory: evermore
         run: npm ci
 
