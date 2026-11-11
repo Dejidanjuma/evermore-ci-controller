@@ -25,12 +25,12 @@ jobs:
 
     steps:
       - name: Checkout public CI controller
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
 
       - name: Checkout private Evermore source
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: Dejidanjuma/evermore
           ref: feat/customer-resident-portal
@@ -39,7 +39,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 22
           cache: npm
@@ -87,7 +87,7 @@ jobs:
 
       - name: Upload dependency manifests only
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: evermore-nextjs-16.4.5-dependency-manifests
           path: |
